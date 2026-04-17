@@ -7,7 +7,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from flask import Flask, render_template, request, jsonify
 from sheets_service import SheetHandler, CLASSES
 
-app = Flask(__name__, template_folder="templates")
+app = Flask(__name__, template_folder="Templates")
 
 # Load the Google Apps Script URL from environment variable
 sheets = SheetHandler(os.getenv("url"))
