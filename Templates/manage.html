@@ -1,0 +1,281 @@
+{% extends "base.html" %}
+{% block title %}Manage — Sunday School{% endblock %}
+
+{% block extra_style %}
+<style>
+  .manage-header { padding: 28px 0 20px; }
+
+  .tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 6px;
+  }
+  .tab {
+    flex: 1;
+    padding: 10px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 8px;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    transition: background 0.18s, color 0.18s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .tab.active {
+    background: var(--ink);
+    color: var(--cream);
+  }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  .form-group { margin-bottom: 16px; }
+  .form-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    margin-bottom: 6px;
+  }
+
+  .select-wrap {
+    position: relative;
+  }
+  .select-wrap::after {
+    content: '';
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0; height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 6px solid var(--muted);
+    pointer-events: none;
+  }
+
+  .radio-group {
+    display: flex;
+    gap: 10px;
+  }
+  .radio-btn {
+    flex: 1;
+    padding: 12px;
+    text-align: center;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: border-color 0.18s, background 0.18s;
+  }
+  .radio-btn input { display: none; }
+  .radio-btn.selected-B {
+    border-color: #2B5DAD;
+    background: #E8F0FB;
+    color: #2B5DAD;
+  }
+  .radio-btn.selected-G {
+    border-color: #AD2B5D;
+    background: #FBE8F0;
+    color: #AD2B5D;
+  }
+
+  .info-box {
+    background: var(--gold-lt);
+    border: 1px solid #E8D5AA;
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 13px;
+    color: #7A5A1A;
+    margin-bottom: 20px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="manage-header">
+  <a href="/" style="font-size:13px;color:var(--muted);text-decoration:none;">← Back</a>
+  <h1 class="page-title" style="margin-top:12px;">Manage</h1>
+  <p class="page-subtitle">Add new students or teachers to the register.</p>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('student')">Add Student</button>
+  <button class="tab" onclick="switchTab('teacher')">Add Teacher</button>
+</div>
+
+<!-- ADD STUDENT -->
+<div class="tab-panel active" id="panel-student">
+  <div class="card">
+    <div class="info-box">
+      This will add a new row to the selected class tab in Google Sheets.
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Full Name</label>
+      <input type="text" id="s-name" placeholder="e.g. Daniel Mina" />
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Gender</label>
+      <div class="radio-group">
+        <label class="radio-btn" id="btn-B" onclick="selectGender('B')">
+          <input type="radio" name="gender" value="B" /> Boy
+        </label>
+        <label class="radio-btn" id="btn-G" onclick="selectGender('G')">
+          <input type="radio" name="gender" value="G" /> Girl
+        </label>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Grade</label>
+      <div class="select-wrap">
+        <select id="s-grade" onchange="updateClassOptions()">
+          <option value="" disabled selected>Select grade…</option>
+          <option value="Pre-KG">Pre-KG</option>
+          <option value="KG">KG</option>
+          <option value="1-2">1-2</option>
+          <option value="3-4">3-4</option>
+          <option value="5-6">5-6</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Class Tab</label>
+      <div class="select-wrap">
+        <select id="s-class">
+          <option value="" disabled selected>Select grade first…</option>
+        </select>
+      </div>
+    </div>
+
+    <button class="btn btn-gold" onclick="addStudent()">Add Student</button>
+  </div>
+</div>
+
+<!-- ADD TEACHER -->
+<div class="tab-panel" id="panel-teacher">
+  <div class="card">
+    <div class="info-box">
+      This will add a new row to the Teachers tab in Google Sheets.
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Full Name</label>
+      <input type="text" id="t-name" placeholder="e.g. Miss Sara" />
+    </div>
+
+    <button class="btn btn-gold" onclick="addTeacher()">Add Teacher</button>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<script>
+  let selectedGender = '';
+
+  const gradeToClass = {
+    "Pre-KG": ["Pre-KG"],
+    "KG":     ["KG"],
+    "1-2":    ["1-2"],
+    "3-4":    ["3-4"],
+    "5-6":    ["5-6"]
+  };
+
+  function updateClassOptions() {
+    const grade = document.getElementById('s-grade').value;
+    const classSelect = document.getElementById('s-class');
+    classSelect.innerHTML = '';
+    const options = gradeToClass[grade] || [];
+    options.forEach(cls => {
+      const opt = document.createElement('option');
+      opt.value = cls;
+      opt.textContent = cls;
+      classSelect.appendChild(opt);
+    });
+    // auto-select if only one option
+    if (options.length === 1) classSelect.selectedIndex = 0;
+  }
+
+  function switchTab(tab) {
+    document.querySelectorAll('.tab').forEach((t, i) => {
+      t.classList.toggle('active', (i === 0 && tab === 'student') || (i === 1 && tab === 'teacher'));
+    });
+    document.getElementById('panel-student').classList.toggle('active', tab === 'student');
+    document.getElementById('panel-teacher').classList.toggle('active', tab === 'teacher');
+  }
+
+  function selectGender(g) {
+    selectedGender = g;
+    document.getElementById('btn-B').className = 'radio-btn' + (g === 'B' ? ' selected-B' : '');
+    document.getElementById('btn-G').className = 'radio-btn' + (g === 'G' ? ' selected-G' : '');
+  }
+
+  async function addStudent() {
+    const name  = document.getElementById('s-name').value.trim();
+    const grade = document.getElementById('s-grade').value;
+    const cls   = document.getElementById('s-class').value;
+
+    if (!name)           return showToast('Please enter a name', 'error');
+    if (!selectedGender) return showToast('Please select Boy or Girl', 'error');
+    if (!grade)          return showToast('Please select a grade', 'error');
+    if (!cls)            return showToast('Please select a class', 'error');
+
+    try {
+      const res = await fetch('/add-student', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ class_name: cls, name, gender: selectedGender, grade })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast(name + ' added successfully ✓', 'success');
+        document.getElementById('s-name').value = '';
+        selectedGender = '';
+        document.getElementById('btn-B').className = 'radio-btn';
+        document.getElementById('btn-G').className = 'radio-btn';
+        document.getElementById('s-grade').selectedIndex = 0;
+        document.getElementById('s-class').innerHTML = '<option value="" disabled selected>Select grade first…</option>';
+      } else {
+        showToast(data.error || 'Error adding student', 'error');
+      }
+    } catch (err) {
+      showToast('Network error — try again', 'error');
+    }
+  }
+
+  async function addTeacher() {
+    const name = document.getElementById('t-name').value.trim();
+    if (!name) return showToast('Please enter a name', 'error');
+
+    try {
+      const res = await fetch('/add-teacher', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast(name + ' added successfully ✓', 'success');
+        document.getElementById('t-name').value = '';
+      } else {
+        showToast(data.error || 'Error adding teacher', 'error');
+      }
+    } catch (err) {
+      showToast('Network error — try again', 'error');
+    }
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,259 @@
+{% extends "base.html" %}
+{% block title %}{{ class_name }} — Attendance{% endblock %}
+
+{% block extra_style %}
+<style>
+  .class-header {
+    padding: 28px 0 20px;
+  }
+  .back-link {
+    font-size: 13px;
+    color: var(--muted);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 12px;
+  }
+  .back-link:hover { color: var(--ink); }
+
+  .stats-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .stat {
+    flex: 1;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    text-align: center;
+  }
+  .stat-num {
+    font-family: 'DM Serif Display', serif;
+    font-size: 26px;
+    line-height: 1;
+  }
+  .stat-label {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .stat.present .stat-num { color: var(--green); }
+  .stat.absent  .stat-num { color: var(--red); }
+
+  .people-list { display: flex; flex-direction: column; gap: 8px; }
+
+  .person-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: #fff;
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: border-color 0.18s, background 0.18s;
+    user-select: none;
+  }
+  .person-row.checked {
+    border-color: var(--green);
+    background: var(--green-lt);
+  }
+  .person-row input[type="checkbox"] { display: none; }
+
+  .check-box {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    border: 2px solid var(--border);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.18s, border-color 0.18s;
+  }
+  .person-row.checked .check-box {
+    background: var(--green);
+    border-color: var(--green);
+  }
+  .check-box svg { display: none; }
+  .person-row.checked .check-box svg { display: block; }
+
+  .person-info { flex: 1; }
+  .person-name { font-weight: 500; font-size: 15px; }
+  .person-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  .gender-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 20px;
+    letter-spacing: 0.04em;
+  }
+  .gender-badge.B { background: #E8F0FB; color: #2B5DAD; }
+  .gender-badge.G { background: #FBE8F0; color: #AD2B5D; }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 20px 0 8px;
+  }
+
+  .submit-bar {
+    position: sticky;
+    bottom: 0;
+    background: var(--cream);
+    border-top: 1px solid var(--border);
+    padding: 16px 20px;
+    margin: 24px -20px -48px;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 48px 0;
+    color: var(--muted);
+    font-size: 14px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="class-header">
+  <a href="/" class="back-link">← Back</a>
+  <h1 class="page-title">{{ class_name }}</h1>
+  <p class="page-subtitle" id="today-date"></p>
+</div>
+
+{% if people %}
+  <div class="stats-row">
+    <div class="stat present">
+      <div class="stat-num" id="count-present">0</div>
+      <div class="stat-label">Present</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">{{ people | length }}</div>
+      <div class="stat-label">Total</div>
+    </div>
+    <div class="stat absent">
+      <div class="stat-num" id="count-absent">{{ people | length }}</div>
+      <div class="stat-label">Absent</div>
+    </div>
+  </div>
+
+  <div class="people-list" id="people-list">
+    {% if class_name == "Teachers" %}
+      <div class="section-label">Teachers</div>
+      {% for person in people %}
+        <label class="person-row" data-index="{{ loop.index0 }}">
+          <input type="checkbox" />
+          <div class="check-box">
+            <svg width="13" height="10" viewBox="0 0 13 10" fill="none">
+              <path d="M1.5 5L5 8.5L11.5 1.5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="person-info">
+            <div class="person-name">{{ person[0] }}</div>
+          </div>
+        </label>
+      {% endfor %}
+
+    {% else %}
+      <div class="section-label">Students</div>
+      {% for person in people %}
+        <label class="person-row" data-index="{{ loop.index0 }}">
+          <input type="checkbox" />
+          <div class="check-box">
+            <svg width="13" height="10" viewBox="0 0 13 10" fill="none">
+              <path d="M1.5 5L5 8.5L11.5 1.5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="person-info">
+            <div class="person-name">{{ person[1] }}</div>
+            <div class="person-meta">{{ person[2] }}</div>
+          </div>
+          <span class="gender-badge {{ person[0] }}">{{ person[0] }}</span>
+        </label>
+      {% endfor %}
+    {% endif %}
+  </div>
+
+  <div class="submit-bar">
+    <button class="btn btn-success" id="submit-btn" onclick="submitAttendance()">
+      Submit Attendance
+    </button>
+  </div>
+
+{% else %}
+  <div class="empty-state">
+    No students found in this class.<br>
+    <a href="/manage" style="color: var(--gold); text-decoration: none;">Add students →</a>
+  </div>
+{% endif %}
+{% endblock %}
+
+{% block extra_script %}
+<script>
+  const className = "{{ class_name }}";
+  const totalPeople = {{ people | length }};
+
+  // Show today's date
+  const today = new Date();
+  document.getElementById('today-date').textContent =
+    today.toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+  // Toggle checkbox rows
+  document.querySelectorAll('.person-row').forEach(row => {
+    row.addEventListener('click', () => {
+      const cb = row.querySelector('input[type="checkbox"]');
+      cb.checked = !cb.checked;
+      row.classList.toggle('checked', cb.checked);
+      updateCounts();
+    });
+  });
+
+  function updateCounts() {
+    const checked = document.querySelectorAll('.person-row.checked').length;
+    document.getElementById('count-present').textContent = checked;
+    document.getElementById('count-absent').textContent = totalPeople - checked;
+  }
+
+  async function submitAttendance() {
+    const rows = document.querySelectorAll('.person-row');
+    const attendance = Array.from(rows).map(r =>
+      r.classList.contains('checked') ? 'Att' : ''
+    );
+
+    const btn = document.getElementById('submit-btn');
+    btn.textContent = 'Saving…';
+    btn.disabled = true;
+
+    try {
+      const res = await fetch('/submit-attendance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ class_name: className, attendance })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast('Attendance saved! ✓', 'success');
+        btn.textContent = 'Saved ✓';
+      } else {
+        showToast(data.error || 'Something went wrong', 'error');
+        btn.textContent = 'Submit Attendance';
+        btn.disabled = false;
+      }
+    } catch (err) {
+      showToast('Network error — try again', 'error');
+      btn.textContent = 'Submit Attendance';
+      btn.disabled = false;
+    }
+  }
+</script>
+{% endblock %}
