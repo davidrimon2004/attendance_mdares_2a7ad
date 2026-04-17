@@ -10,7 +10,7 @@ from flask import Flask, render_template, request, jsonify
 from sheets_service import SheetHandler, CLASSES
 
 # Absolute path to templates folder (sits next to this file)
-TEMPLATES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")
+TEMPLATES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Templates")
 app = Flask(__name__, template_folder=TEMPLATES)
 
 # Load the Google Apps Script URL from environment variable
