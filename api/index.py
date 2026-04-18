@@ -8,7 +8,7 @@ sys.path.insert(0, ROOT)
 from flask import Flask, render_template, request, jsonify
 from sheets_service import SheetHandler, CLASSES, is_same_week
 
-TEMPLATES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")
+TEMPLATES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Templates")
 app = Flask(__name__, template_folder=TEMPLATES)
 
 sheets = SheetHandler(os.getenv("url"))
