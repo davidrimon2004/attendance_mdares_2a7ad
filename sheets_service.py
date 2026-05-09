@@ -64,7 +64,7 @@ class SheetHandler:
     # ── NEW ── submit fresh attendance for today
     def mark_attendance(self, sheet_name, attendance_values, attendance_date=None):
         if attendance_date is None:
-            attendance_date = date.today().strftime("%d/%m/%y")
+            attendance_date = date.today().strftime("%d/%m/%Y")  # 4-digit year to match sheet format
         payload = {
             "sheetName": sheet_name,
             "mode": "new",
@@ -107,14 +107,16 @@ def last_friday(from_date=None):
 
 def is_same_week(date_str):
     """
-    Return True if date_str (dd/mm/yy) falls in the current
-    Friday-to-Thursday week (i.e. >= last Friday).
+    Return True if date_str falls in the current Friday-to-Thursday week.
+    Handles both 2-digit year (dd/mm/yy) and 4-digit year (dd/mm/yyyy) formats.
     """
-    try:
-        recorded = datetime.strptime(date_str, "%d/%m/%y").date()
-        return recorded >= last_friday()
-    except Exception:
-        return False
+    for fmt in ("%d/%m/%Y", "%d/%m/%y"):
+        try:
+            recorded = datetime.strptime(date_str, fmt).date()
+            return recorded >= last_friday()
+        except ValueError:
+            continue
+    return False  # unrecognised format
 
 
 # Class names matching your Google Sheet tab names exactly
