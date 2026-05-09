@@ -64,11 +64,14 @@ def submit_attendance():
 
 @app.route("/update-attendance", methods=["POST"])
 def update_attendance():
+    print("[update_attendance] route hit")
     data = request.get_json()
+    print(f"[update_attendance] data={data}")
     class_name = data.get("class_name")
     attendance_date = data.get("date")
     attendance = data.get("attendance")
     if not class_name or not attendance_date or attendance is None:
+        print(f"[update_attendance] missing data: class_name={class_name!r}, date={attendance_date!r}")
         return jsonify({"error": "Missing data"}), 400
     if class_name not in CLASSES:
         return jsonify({"error": "Invalid class"}), 400
