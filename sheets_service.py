@@ -21,12 +21,16 @@ class SheetHandler:
     # ── LASTDATE ── get the last recorded attendance date + values
     def get_last_attendance(self, sheet_name):
         payload = {"sheetName": sheet_name, "mode": "lastdate"}
+        print(f"[get_last_attendance] calling Apps Script for '{sheet_name}'")
         try:
             response = requests.post(self.url, json=payload)
+            print(f"[get_last_attendance] status={response.status_code} body={response.text[:300]}")
             response.raise_for_status()
-            return response.json()  # { "date": "dd/mm/yy", "values": ["Att", "", ...] }
+            data = response.json()
+            print(f"[get_last_attendance] parsed={data}")
+            return data  # { "date": "dd/mm/yy", "values": ["Att", "", ...] }
         except Exception as e:
-            print(f"Error getting last date for '{sheet_name}': {e}")
+            print(f"[get_last_attendance] FAILED for '{sheet_name}': {type(e).__name__}: {e}")
             return None
 
     # ── APPEND ── add a new student row
