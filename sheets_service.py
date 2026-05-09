@@ -21,16 +21,12 @@ class SheetHandler:
     # ── LASTDATE ── get the last recorded attendance date + values
     def get_last_attendance(self, sheet_name):
         payload = {"sheetName": sheet_name, "mode": "lastdate"}
-        print(f"[get_last_attendance] calling Apps Script for '{sheet_name}'")
         try:
             response = requests.post(self.url, json=payload)
-            print(f"[get_last_attendance] status={response.status_code} body={response.text[:300]}")
             response.raise_for_status()
-            data = response.json()
-            print(f"[get_last_attendance] parsed={data}")
-            return data  # { "date": "dd/mm/yy", "values": ["Att", "", ...] }
+            return response.json()  # { "date": "dd/mm/yy", "values": ["Att", "", ...] }
         except Exception as e:
-            print(f"[get_last_attendance] FAILED for '{sheet_name}': {type(e).__name__}: {e}")
+            print(f"Error getting last date for '{sheet_name}': {e}")
             return None
 
     # ── APPEND ── add a new student row
@@ -68,7 +64,7 @@ class SheetHandler:
     # ── NEW ── submit fresh attendance for today
     def mark_attendance(self, sheet_name, attendance_values, attendance_date=None):
         if attendance_date is None:
-            attendance_date = date.today().strftime("%d/%m/%Y")  # 4-digit year to match sheet format
+            attendance_date = date.today().strftime("%d/%m/%y")
         payload = {
             "sheetName": sheet_name,
             "mode": "new",
@@ -111,16 +107,14 @@ def last_friday(from_date=None):
 
 def is_same_week(date_str):
     """
-    Return True if date_str falls in the current Friday-to-Thursday week.
-    Handles both 2-digit year (dd/mm/yy) and 4-digit year (dd/mm/yyyy) formats.
+    Return True if date_str (dd/mm/yy) falls in the current
+    Friday-to-Thursday week (i.e. >= last Friday).
     """
-    for fmt in ("%d/%m/%Y", "%d/%m/%y"):
-        try:
-            recorded = datetime.strptime(date_str, fmt).date()
-            return recorded >= last_friday()
-        except ValueError:
-            continue
-    return False  # unrecognised format
+    try:
+        recorded = datetime.strptime(date_str, "%d/%m/%y").date()
+        return recorded >= last_friday()
+    except Exception:
+        return False
 
 
 # Class names matching your Google Sheet tab names exactly
