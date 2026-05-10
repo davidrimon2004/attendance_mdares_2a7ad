@@ -1,6 +1,7 @@
 import requests
 import os
 from datetime import date, datetime, timedelta
+from dateutil import parser as dateparser
 
 
 class SheetHandler:
@@ -24,7 +25,7 @@ class SheetHandler:
         try:
             response = requests.post(self.url, json=payload)
             response.raise_for_status()
-            return response.json()  # { "date": "dd/mm/yy", "values": ["Att", "", ...] }
+            return response.json()
         except Exception as e:
             print(f"Error getting last date for '{sheet_name}': {e}")
             return None
@@ -100,20 +101,20 @@ def last_friday(from_date=None):
     """Return the most recent Friday on or before from_date."""
     if from_date is None:
         from_date = date.today()
-    # weekday(): Monday=0 ... Friday=4 ... Sunday=6
     days_since_friday = (from_date.weekday() - 4) % 7
     return from_date - timedelta(days=days_since_friday)
 
 
 def is_same_week(date_str):
     """
-    Return True if date_str (dd/mm/yy) falls in the current
-    Friday-to-Thursday week (i.e. >= last Friday).
+    Return True if date_str falls in the current Friday-to-Thursday week.
+    Handles any date format Google Sheets might return.
     """
     try:
-        recorded = datetime.strptime(date_str, "%d/%m/%y").date()
+        recorded = dateparser.parse(str(date_str)).date()
         return recorded >= last_friday()
-    except Exception:
+    except Exception as e:
+        print(f"Date parse error: {e} for date: {date_str}")
         return False
 
 
