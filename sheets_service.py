@@ -2,7 +2,7 @@ import requests
 import os
 from datetime import date, datetime, timedelta
 from dateutil import parser as dateparser
-
+import re
 
 class SheetHandler:
     def __init__(self, url):
@@ -106,17 +106,14 @@ def last_friday(from_date=None):
 
 
 def is_same_week(date_str):
-    """
-    Return True if date_str falls in the current Friday-to-Thursday week.
-    Handles any date format Google Sheets might return.
-    """
     try:
-        recorded = dateparser.parse(str(date_str)).date()
+        # Remove Arabic timezone text in parentheses
+        cleaned = re.sub(r'\(.*?\)', '', str(date_str)).strip()
+        recorded = dateparser.parse(cleaned).date()
         return recorded >= last_friday()
     except Exception as e:
         print(f"Date parse error: {e} for date: {date_str}")
         return False
-
 
 # Class names matching your Google Sheet tab names exactly
 CLASSES = [
