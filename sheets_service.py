@@ -112,10 +112,9 @@ def last_friday(from_date=None):
 
 def is_same_week(date_str):
     try:
-        # Remove Arabic timezone text in parentheses
         cleaned = re.sub(r'\(.*?\)', '', str(date_str)).strip()
         recorded = dateparser.parse(cleaned).date()
-        return recorded >= last_friday()
+        return recorded == date.today()  # only block if recorded TODAY
     except Exception as e:
         print(f"Date parse error: {e} for date: {date_str}")
         return False
