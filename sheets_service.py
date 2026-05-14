@@ -98,10 +98,15 @@ class SheetHandler:
 
 
 def last_friday(from_date=None):
-    """Return the most recent Friday on or before from_date."""
+    """Return the most recent Friday strictly before today,
+    so today (Friday) is always a new submission day."""
     if from_date is None:
         from_date = date.today()
+    # If today is Friday (weekday 4), go back 7 days to last Friday
+    # so today is treated as a NEW week
     days_since_friday = (from_date.weekday() - 4) % 7
+    if days_since_friday == 0:
+        days_since_friday = 7
     return from_date - timedelta(days=days_since_friday)
 
 
