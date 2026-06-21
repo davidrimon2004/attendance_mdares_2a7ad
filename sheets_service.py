@@ -1,7 +1,7 @@
 import os
 import json
 import base64
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from dateutil import parser as dateparser
 import re
 
@@ -181,7 +181,12 @@ def col_num_to_letter(n):
 def is_same_week(date_str):
     try:
         cleaned = re.sub(r'\(.*?\)', '', str(date_str)).strip()
-        recorded = dateparser.parse(cleaned).date()
+        # Try exact format first (%d/%m/%y) — used by REST API
+        try:
+            recorded = datetime.strptime(cleaned, "%d/%m/%y").date()
+        except ValueError:
+            # Fall back to dateutil for older date strings
+            recorded = dateparser.parse(cleaned).date()
         return recorded == date.today()
     except Exception as e:
         print(f"Date parse error: {e} for date: {date_str}")
