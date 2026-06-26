@@ -32,7 +32,7 @@ def class_page(class_name):
     existing_date = None
     existing_values = []
 
-    if last and last.get("date"):
+    if last.get("date"):
         if is_same_week(last["date"]):
             this_week = True
             existing_date = last["date"]
