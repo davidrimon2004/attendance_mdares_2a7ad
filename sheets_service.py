@@ -66,12 +66,18 @@ class SheetHandler:
                     person.append("")
                 people.append(person)
 
-            # Extract last attendance column by the latest valid date header.
+            # Extract the attendance column to display.
+            # Prefer the latest date from the current Friday-through-Thursday week,
+            # otherwise fall back to the latest valid date.
             date_val = None
             values = []
             if len(header_row) > data_cols:
                 last_col_index = None
                 latest_date = None
+                current_week_col_index = None
+                current_week_date = None
+                current_week_dt = None
+
                 for col_index in range(data_cols, len(header_row)):
                     dt = parse_sheet_date(header_row[col_index])
                     if dt is None:
@@ -79,9 +85,19 @@ class SheetHandler:
                     if latest_date is None or dt > latest_date:
                         latest_date = dt
                         last_col_index = col_index
+                    if is_same_week(header_row[col_index]):
+                        if current_week_dt is None or dt > current_week_dt:
+                            current_week_dt = dt
+                            current_week_col_index = col_index
+                            current_week_date = header_row[col_index]
+
+                if current_week_col_index is not None:
+                    date_val = current_week_date
+                    last_col_index = current_week_col_index
+                elif last_col_index is not None:
+                    date_val = header_row[last_col_index]
 
                 if last_col_index is not None:
-                    date_val = header_row[last_col_index]
                     for row in data_rows:
                         values.append(row[last_col_index] if last_col_index < len(row) else "")
 
