@@ -60,8 +60,8 @@
     user-select: none;
   }
   .person-row.checked {
-    border-color: var(--green);
-    background: var(--green-lt);
+    border-color: #3b82f6;
+    background: #eff6ff;
   }
   .person-row input[type="checkbox"] { display: none; }
 
@@ -77,8 +77,8 @@
     transition: background 0.18s, border-color 0.18s;
   }
   .person-row.checked .check-box {
-    background: var(--green);
-    border-color: var(--green);
+    background: #3b82f6;
+    border-color: #3b82f6;
   }
   .check-box svg { display: none; }
   .person-row.checked .check-box svg { display: block; }
@@ -148,7 +148,7 @@
   </div>
 
   {% if this_week %}
-    <p style="margin: 8px 0 16px; color: var(--green); font-size: 14px;">
+    <p style="margin: 8px 0 16px; color: #2563eb; font-size: 14px;">
       Attendance for this week was already recorded on {{ existing_date }}.
     </p>
   {% else %}
