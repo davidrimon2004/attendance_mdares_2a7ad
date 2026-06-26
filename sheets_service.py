@@ -178,7 +178,15 @@ def col_num_to_letter(n):
     return result
 
 
+def current_week_friday():
+    """Return the most recent Friday on or before today."""
+    today = date.today()
+    days_since_friday = (today.weekday() - 4) % 7  # 0 if today is Friday
+    return today - timedelta(days=days_since_friday)
+
+
 def is_same_week(date_str):
+    """Return True if date_str falls on or after the most recent Friday."""
     try:
         cleaned = re.sub(r'\(.*?\)', '', str(date_str)).strip()
         # Try exact format first (%d/%m/%y) — used by REST API
@@ -187,7 +195,7 @@ def is_same_week(date_str):
         except ValueError:
             # Fall back to dateutil for older date strings
             recorded = dateparser.parse(cleaned).date()
-        return recorded == date.today()
+        return recorded >= current_week_friday()
     except Exception as e:
         print(f"Date parse error: {e} for date: {date_str}")
         return False
