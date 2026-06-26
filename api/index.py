@@ -103,3 +103,15 @@ def add_teacher():
         return jsonify({"error": "Missing name"}), 400
     result = sheets.add_teacher(name)
     return jsonify({"message": result})
+@app.route("/debug/<path:class_name>")
+def debug_date(class_name):
+    class_name = unquote(class_name)
+    people, last = sheets.get_class_data(class_name)
+    from sheets_service import current_week_friday
+    from datetime import date
+    return jsonify({
+        "raw_date_from_sheet": last.get("date"),
+        "current_week_friday": str(current_week_friday()),
+        "today": str(date.today()),
+        "is_same_week_result": str(last.get("date") and last.get("date") >= str(current_week_friday()))
+    })
