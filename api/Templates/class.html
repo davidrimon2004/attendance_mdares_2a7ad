@@ -115,6 +115,16 @@
     margin: 24px -20px -48px;
   }
 
+  .btn-update {
+    background: #3b82f6;
+    border-color: #2563eb;
+    color: #fff;
+  }
+
+  .btn-update:hover {
+    background: #2563eb;
+  }
+
   .empty-state {
     text-align: center;
     padding: 48px 0;
@@ -195,7 +205,7 @@
   </div>
 
   <div class="submit-bar">
-    <button class="btn btn-success" id="submit-btn" onclick="submitAttendance()">
+    <button class="btn{% if this_week %} btn-update{% else %} btn-success{% endif %}" id="submit-btn" onclick="submitAttendance()">
       {{ 'Update Attendance' if this_week else 'Submit Attendance' }}
     </button>
   </div>

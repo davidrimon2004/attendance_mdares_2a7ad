@@ -111,12 +111,12 @@
 
   <div class="quick-links">
     {% for cls in classes %}
-      {% if cls != "الخدام + ال helpers" %}
+      
         <a href="/class/{{ cls | urlencode }}" class="quick-link">
           {{ cls }}
           <span class="ql-label">Tap to attend</span>
         </a>
-      {% endif %}
+      
     {% endfor %}
   </div>
 </div>
