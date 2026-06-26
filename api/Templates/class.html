@@ -147,12 +147,22 @@
     </div>
   </div>
 
+  {% if this_week %}
+    <p style="margin: 8px 0 16px; color: var(--green); font-size: 14px;">
+      Attendance for this week was already recorded on {{ existing_date }}.
+    </p>
+  {% else %}
+    <p style="margin: 8px 0 16px; color: var(--muted); font-size: 14px;">
+      No attendance recorded for this week yet.
+    </p>
+  {% endif %}
+
   <div class="people-list" id="people-list">
     {% if class_name == "Teachers" %}
       <div class="section-label">Teachers</div>
       {% for person in people %}
-        <label class="person-row" data-index="{{ loop.index0 }}">
-          <input type="checkbox" />
+        <label class="person-row{% if this_week and existing_values and existing_values[loop.index0] == 'Att' %} checked{% endif %}" data-index="{{ loop.index0 }}">
+          <input type="checkbox" {% if this_week and existing_values and existing_values[loop.index0] == 'Att' %}checked{% endif %} />
           <div class="check-box">
             <svg width="13" height="10" viewBox="0 0 13 10" fill="none">
               <path d="M1.5 5L5 8.5L11.5 1.5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -167,8 +177,8 @@
     {% else %}
       <div class="section-label">Students</div>
       {% for person in people %}
-        <label class="person-row" data-index="{{ loop.index0 }}">
-          <input type="checkbox" />
+        <label class="person-row{% if this_week and existing_values and existing_values[loop.index0] == 'Att' %} checked{% endif %}" data-index="{{ loop.index0 }}">
+          <input type="checkbox" {% if this_week and existing_values and existing_values[loop.index0] == 'Att' %}checked{% endif %} />
           <div class="check-box">
             <svg width="13" height="10" viewBox="0 0 13 10" fill="none">
               <path d="M1.5 5L5 8.5L11.5 1.5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -186,7 +196,7 @@
 
   <div class="submit-bar">
     <button class="btn btn-success" id="submit-btn" onclick="submitAttendance()">
-      Submit Attendance
+      {{ 'Update Attendance' if this_week else 'Submit Attendance' }}
     </button>
   </div>
 
@@ -202,6 +212,9 @@
 <script>
   const className = "{{ class_name }}";
   const totalPeople = {{ people | length }};
+  const thisWeek = {{ this_week | tojson }};
+  const existingDate = {{ existing_date | tojson }};
+  const existingValues = {{ existing_values | tojson }};
 
   // Show today's date
   const today = new Date();
@@ -217,6 +230,14 @@
       updateCounts();
     });
   });
+
+  document.querySelectorAll('.person-row').forEach((row, index) => {
+    const cb = row.querySelector('input[type="checkbox"]');
+    const shouldBeChecked = thisWeek && existingValues[index] === 'Att';
+    cb.checked = shouldBeChecked;
+    row.classList.toggle('checked', shouldBeChecked);
+  });
+  updateCounts();
 
   function updateCounts() {
     const checked = document.querySelectorAll('.person-row.checked').length;
@@ -235,23 +256,27 @@
     btn.disabled = true;
 
     try {
-      const res = await fetch('/submit-attendance', {
+      const payload = thisWeek
+        ? { class_name: className, date: existingDate, attendance }
+        : { class_name: className, attendance };
+      const endpoint = thisWeek ? '/update-attendance' : '/submit-attendance';
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ class_name: className, attendance })
+        body: JSON.stringify(payload)
       });
       const data = await res.json();
       if (res.ok) {
-        showToast('Attendance saved! ✓', 'success');
-        btn.textContent = 'Saved ✓';
+        showToast(thisWeek ? 'Attendance updated! ✓' : 'Attendance saved! ✓', 'success');
+        btn.textContent = thisWeek ? 'Updated ✓' : 'Saved ✓';
       } else {
         showToast(data.error || 'Something went wrong', 'error');
-        btn.textContent = 'Submit Attendance';
+        btn.textContent = thisWeek ? 'Update Attendance' : 'Submit Attendance';
         btn.disabled = false;
       }
     } catch (err) {
       showToast('Network error — try again', 'error');
-      btn.textContent = 'Submit Attendance';
+      btn.textContent = thisWeek ? 'Update Attendance' : 'Submit Attendance';
       btn.disabled = false;
     }
   }

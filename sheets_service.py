@@ -116,16 +116,34 @@ class SheetHandler:
                 range=f"'{sheet_name}'!1:1"
             ).execute()
             header = result.get("values", [[]])[0]
-            next_col = len(header) + 1
-            col_letter = col_num_to_letter(next_col)
 
-            self.sheet.values().update(
-                spreadsheetId=self.spreadsheet_id,
-                range=f"'{sheet_name}'!{col_letter}1",
-                valueInputOption="RAW",
-                body={"values": [[attendance_date]]}
-            ).execute()
+            target_col = None
+            for i, h in enumerate(header):
+                if is_same_week(h):
+                    target_col = i + 1
+                    break
 
+            if target_col is None:
+                next_col = len(header) + 1
+                col_letter = col_num_to_letter(next_col)
+
+                self.sheet.values().update(
+                    spreadsheetId=self.spreadsheet_id,
+                    range=f"'{sheet_name}'!{col_letter}1",
+                    valueInputOption="RAW",
+                    body={"values": [[attendance_date]]}
+                ).execute()
+
+                self.sheet.values().update(
+                    spreadsheetId=self.spreadsheet_id,
+                    range=f"'{sheet_name}'!{col_letter}2",
+                    valueInputOption="RAW",
+                    body={"values": [[v] for v in attendance_values]}
+                ).execute()
+
+                return f"Attendance marked for {attendance_date}"
+
+            col_letter = col_num_to_letter(target_col)
             self.sheet.values().update(
                 spreadsheetId=self.spreadsheet_id,
                 range=f"'{sheet_name}'!{col_letter}2",
@@ -133,7 +151,8 @@ class SheetHandler:
                 body={"values": [[v] for v in attendance_values]}
             ).execute()
 
-            return f"Attendance marked for {attendance_date}"
+            existing_date = header[target_col - 1] if target_col - 1 < len(header) else attendance_date
+            return f"Updated attendance for {existing_date}"
         except Exception as e:
             print(f"Error marking attendance for '{sheet_name}': {e}")
             return f"Error: {e}"
