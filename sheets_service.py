@@ -66,14 +66,24 @@ class SheetHandler:
                     person.append("")
                 people.append(person)
 
-            # Extract last attendance column
+            # Extract last attendance column by the latest valid date header.
             date_val = None
             values = []
             if len(header_row) > data_cols:
-                date_val = header_row[-1]
-                last_col_index = len(header_row) - 1
-                for row in data_rows:
-                    values.append(row[last_col_index] if last_col_index < len(row) else "")
+                last_col_index = None
+                latest_date = None
+                for col_index in range(data_cols, len(header_row)):
+                    dt = parse_sheet_date(header_row[col_index])
+                    if dt is None:
+                        continue
+                    if latest_date is None or dt > latest_date:
+                        latest_date = dt
+                        last_col_index = col_index
+
+                if last_col_index is not None:
+                    date_val = header_row[last_col_index]
+                    for row in data_rows:
+                        values.append(row[last_col_index] if last_col_index < len(row) else "")
 
             return people, {"date": date_val, "values": values}
 
@@ -118,10 +128,17 @@ class SheetHandler:
             header = result.get("values", [[]])[0]
 
             target_col = None
+            target_date = None
+            target_dt = None
             for i, h in enumerate(header):
+                dt = parse_sheet_date(h)
+                if dt is None:
+                    continue
                 if is_same_week(h):
-                    target_col = i + 1
-                    break
+                    if target_dt is None or dt > target_dt:
+                        target_dt = dt
+                        target_col = i + 1
+                        target_date = h
 
             if target_col is None:
                 next_col = len(header) + 1
@@ -151,8 +168,7 @@ class SheetHandler:
                 body={"values": [[v] for v in attendance_values]}
             ).execute()
 
-            existing_date = header[target_col - 1] if target_col - 1 < len(header) else attendance_date
-            return f"Updated attendance for {existing_date}"
+            return f"Updated attendance for {target_date}"
         except Exception as e:
             print(f"Error marking attendance for '{sheet_name}': {e}")
             return f"Error: {e}"
@@ -197,24 +213,32 @@ def col_num_to_letter(n):
     return result
 
 
-def current_week_friday():
-    """Return the most recent Friday on or before today."""
-    today = date.today()
+def parse_sheet_date(date_str):
+    try:
+        cleaned = re.sub(r'\(.*?\)', '', str(date_str)).strip()
+        if not cleaned:
+            return None
+        try:
+            return datetime.strptime(cleaned, "%d/%m/%y").date()
+        except ValueError:
+            return dateparser.parse(cleaned, dayfirst=True).date()
+    except Exception:
+        return None
+
+
+def current_week_friday(today=None):
+    """Return the most recent Friday on or before the given date (or today)."""
+    if today is None:
+        today = date.today()
     days_since_friday = (today.weekday() - 4) % 7  # 0 if today is Friday
     return today - timedelta(days=days_since_friday)
 
 
-def is_same_week(date_str):
-    """Return True if date_str falls on or after the most recent Friday."""
-    try:
-        cleaned = re.sub(r'\(.*?\)', '', str(date_str)).strip()
-        # Try exact format first (%d/%m/%y) — used by REST API
-        try:
-            recorded = datetime.strptime(cleaned, "%d/%m/%y").date()
-        except ValueError:
-            # Fall back to dateutil for older date strings
-            recorded = dateparser.parse(cleaned).date()
-        return recorded >= current_week_friday()
-    except Exception as e:
-        print(f"Date parse error: {e} for date: {date_str}")
+def is_same_week(date_str, today=None):
+    """Return True if date_str falls in the current week from Friday through Thursday."""
+    recorded = parse_sheet_date(date_str)
+    if recorded is None:
         return False
+    start = current_week_friday(today)
+    end = start + timedelta(days=7)
+    return start <= recorded < end
